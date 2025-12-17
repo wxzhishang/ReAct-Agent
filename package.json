@@ -1,8 +1,18 @@
 {
   "name": "react-agent",
+  "version": "1.1.0",
+  "description": "基于 ReAct 架构的 AI Agent 实现，支持自定义 API 端点",
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {
+    "start": "bun run index.ts",
+    "dev": "bun --watch index.ts",
+    "type-check": "tsc --noEmit",
+    "example:basic": "bun run examples/basic-example.ts",
+    "example:custom": "bun run examples/custom-tool-example.ts",
+    "example:siliconflow": "bun run examples/siliconflow-example.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
@@ -11,6 +21,7 @@
   },
   "dependencies": {
     "consola": "^3.4.2",
+    "mathjs": "^15.1.0",
     "openai": "^6.14.0",
     "zod": "^4.2.1"
   }
