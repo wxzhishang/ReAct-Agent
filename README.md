@@ -39,8 +39,8 @@ bun install
 ```bash
 # OpenAI API 配置（必需）
 OPENAI_API_KEY=your-api-key-here
-OPENAI_BASE_URL=https://api.siliconflow.cn/v1
-OPENAI_MODEL=Qwen/Qwen2.5-72B-Instruct
+OPENAI_BASE_URL=your-base-url
+OPENAI_MODEL=your-model-choice
 
 # 搜索 API 配置（可选 - 使用真实搜索）
 # SERPER_API_KEY=your-serper-api-key
@@ -51,7 +51,7 @@ OPENAI_MODEL=Qwen/Qwen2.5-72B-Instruct
 
 **获取 API Key：**
 - SiliconFlow（推荐）: https://cloud.siliconflow.cn/account/ak
-- Serper 搜索: https://serper.dev
+- Serper 搜索: 暂不支持
 - 高德地图开放平台: https://console.amap.com/dev/key/app
 
 ### 3. 运行程序
@@ -340,84 +340,3 @@ interface AgentConfig {
   verbose?: boolean;        // 是否显示详细日志，默认 false
 }
 ```
-
-## 🌐 API 提供商
-
-### SiliconFlow（国内推荐）
-
-```bash
-OPENAI_BASE_URL=https://api.siliconflow.cn/v1
-OPENAI_MODEL=Qwen/Qwen2.5-72B-Instruct
-```
-
-### OpenAI 官方
-
-```bash
-# OPENAI_BASE_URL 留空或使用默认值
-OPENAI_MODEL=gpt-4o-mini
-```
-
-### 其他兼容的 API
-
-任何 OpenAI 兼容的 API 都可以使用。
-
-## 💡 示例问题
-
-### 计算类
-- "计算 (123 + 456) * 789"
-- "sqrt(16) + 2^3 是多少？"
-
-### 搜索 + 计算组合
-- "埃菲尔铁塔的高度乘以2是多少？"
-- "长城的长度除以1000是多少？"
-
-### 天气查询
-- "北京今天天气怎么样？"
-- "上海的温度乘以2是多少？"
-
-### 复杂推理
-- "北京和上海的温度相差多少度？"
-- "搜索泰姬陵的信息，然后告诉我它建于哪个世纪"
-
-## 🔍 调试
-
-启用详细日志查看 Agent 的完整思考过程：
-
-```typescript
-const agent = new ReActAgent(apiKey, toolRegistry, {
-  verbose: true,  // 启用详细日志
-});
-```
-
-## 📜 脚本命令
-
-```bash
-# 运行交互式程序
-bun run start
-
-# 开发模式（自动重载）
-bun run dev
-
-# 类型检查
-bun run type-check
-
-# 运行示例
-bun run example:basic
-bun run example:custom
-bun run example:siliconflow
-```
-
-## 📄 许可证
-
-MIT
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-## 📚 参考资料
-
-- [ReAct Paper](https://arxiv.org/abs/2210.03629) - 原始论文
-- [OpenAI API Documentation](https://platform.openai.com/docs)
-- [Bun Documentation](https://bun.sh/docs)
-- [SiliconFlow](https://cloud.siliconflow.cn/)
