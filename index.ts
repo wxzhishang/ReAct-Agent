@@ -18,10 +18,25 @@ import { consola } from "consola";
 import {
   ReActAgent,
   ToolRegistry,
-  CalculatorTool,
-  SearchTool,
-  WeatherTool,
+  SwaggerParserTool,
+  BasicTypeGeneratorTool,
+  BasicAPIGeneratorTool,
+  FileReaderTool,
+  FileWriterTool,
+  FileExistsTool,
+  FileSearchTool,
+  DirectoryListTool,
 } from "./src/index.ts";
+
+// 测试模式的预设问题
+const TEST_MODE = process.env.TEST_MODE === "true";
+const TEST_QUESTIONS = [
+  '请使用 swagger_parser 工具，传入参数 {"filePath": "examples/sample-swagger.json"} 来解析这个 Swagger 文档',
+  '根据刚才解析的结果，使用 basic_type_generator 工具生成 TypeScript 类型定义，参数格式为 {"swaggerData": {...}}，swaggerData 就是刚才的解析结果',
+  '使用 file_writer 工具保存类型定义，参数为 {"filePath": "generated/types.ts", "content": "刚才生成的类型代码"}',
+  '使用 basic_api_generator 工具根据之前解析的 Swagger 数据生成 API 函数',
+  '使用 file_writer 工具将 API 函数保存到 "generated/api.ts"',
+];
 
 async function main() {
   // 1. 从环境变量读取配置
@@ -48,9 +63,18 @@ async function main() {
 
   // 2. 创建工具注册表并注册工具
   const toolRegistry = new ToolRegistry();
-  toolRegistry.register(new CalculatorTool());
-  toolRegistry.register(new SearchTool());
-  toolRegistry.register(new WeatherTool());
+  
+  // API 代码生成工具
+  toolRegistry.register(new SwaggerParserTool());
+  toolRegistry.register(new BasicTypeGeneratorTool());
+  toolRegistry.register(new BasicAPIGeneratorTool());
+  
+  // 文件操作工具
+  toolRegistry.register(new FileReaderTool());
+  toolRegistry.register(new FileWriterTool());
+  toolRegistry.register(new FileExistsTool());
+  toolRegistry.register(new FileSearchTool());
+  toolRegistry.register(new DirectoryListTool());
 
   // 3. 创建 Agent（新的配置方式）
   const agent = new ReActAgent(apiKey, toolRegistry, {
@@ -63,20 +87,39 @@ async function main() {
 
   // 4. 交互式问答循环
   consola.success("\n🎉 ReAct Agent 启动成功！");
-  consola.info("\n💡 使用提示:");
-  consola.info("  - 输入你的问题，Agent 会自动选择工具并推理");
-  consola.info("  - 支持多轮对话，Agent 会记住之前的对话内容");
-  consola.info("  - 输入 'exit' 或 'quit' 退出程序");
-  consola.info("  - 输入 'clear' 清空屏幕");
-  consola.info("  - 输入 'reset' 清除对话历史");
-  consola.info("  - 输入 'history' 查看对话历史");
-  consola.info("  - 按 Ctrl+C 强制退出\n");
+  
+  if (TEST_MODE) {
+    consola.info("\n🧪 测试模式已启用 - 自动执行API代码生成测试\n");
+  } else {
+    consola.info("\n💡 使用提示:");
+    consola.info("  - 输入你的问题，Agent 会自动选择工具并推理");
+    consola.info("  - 支持多轮对话，Agent 会记住之前的对话内容");
+    consola.info("  - 输入 'exit' 或 'quit' 退出程序");
+    consola.info("  - 输入 'clear' 清空屏幕");
+    consola.info("  - 输入 'reset' 清除对话历史");
+    consola.info("  - 输入 'history' 查看对话历史");
+    consola.info("  - 按 Ctrl+C 强制退出\n");
+  }
 
   // 交互式循环
+  let testQuestionIndex = 0;
   while (true) {
     try {
-      // 读取用户输入
-      const question = prompt("🤔 请输入你的问题: ");
+      // 读取用户输入（测试模式使用预设问题）
+      let question: string | null;
+      
+      if (TEST_MODE) {
+        if (testQuestionIndex >= TEST_QUESTIONS.length) {
+          consola.success("\n✅ 测试完成！\n");
+          break;
+        }
+        question = TEST_QUESTIONS[testQuestionIndex] || "";
+        testQuestionIndex++;
+        consola.info(`\n📝 执行测试问题 ${testQuestionIndex}/${TEST_QUESTIONS.length}:`);
+        consola.info(`   ${question}\n`);
+      } else {
+        question = prompt("🤔 请输入你的问题: ");
+      }
 
       // 处理空输入
       if (!question || question.trim() === "") {

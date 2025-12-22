@@ -1,7 +1,7 @@
 {
   "name": "react-agent",
-  "version": "1.1.0",
-  "description": "基于 ReAct 架构的 AI Agent 实现，支持自定义 API 端点",
+  "version": "1.2.0",
+  "description": "AI-powered API code generator based on ReAct architecture. Automatically generates TypeScript API code from Swagger/OpenAPI documents.",
   "module": "index.ts",
   "type": "module",
   "private": true,
@@ -11,17 +11,22 @@
     "type-check": "tsc --noEmit",
     "example:basic": "bun run examples/basic-example.ts",
     "example:custom": "bun run examples/custom-tool-example.ts",
-    "example:siliconflow": "bun run examples/siliconflow-example.ts"
+    "example:siliconflow": "bun run examples/siliconflow-example.ts",
+    "example:api-codegen": "bun run examples/api-code-gen-example.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/node": "^25.0.3",
+    "fast-check": "^4.5.2"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
     "consola": "^3.4.2",
-    "mathjs": "^15.1.0",
+    "fast-glob": "^3.3.3",
+    "glob": "^13.0.0",
     "openai": "^6.14.0",
     "zod": "^4.2.1"
   }

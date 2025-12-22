@@ -7,13 +7,71 @@
  * 生成系统提示词
  * @param toolDescriptions 可用工具的描述
  * @param toolNames 工具名称列表
+ * @param projectStructure 项目文件结构（可选）
  */
 export function generateSystemPrompt(
   toolDescriptions: string,
-  toolNames: string[]
+  toolNames: string[],
+  projectStructure?: string
 ): string {
-  return `你是一个强大的 AI Agent，能够通过推理和使用工具来回答问题。
+  // 默认的文件路径规范（参考 Pont 风格）
+  const defaultPathRules = `
+📁 项目文件结构规范（参考 Pont 代码生成器风格）：
 
+**标准目录结构：**
+\`\`\`
+src/services/          # API 服务层（主目录）
+├── api.d.ts          # 全局类型声明文件
+├── index.ts          # 服务入口文件
+├── baseClass.ts      # 基础类型定义（defs）
+└── mods/             # 按业务模块组织的 API
+    ├── user/         # 用户模块
+    │   └── index.ts
+    ├── order/        # 订单模块
+    │   └── index.ts
+    └── ...
+\`\`\`
+
+**路径使用规则（优先级从高到低）：**
+1. ✅ **用户明确指定路径** → 直接使用用户提供的完整路径
+   - 示例：用户说"写入到 custom/path.ts" → 使用 \`custom/path.ts\`
+
+2. ✅ **用户未指定路径** → 根据内容类型自动选择默认路径：
+   - **模块 API 代码**（包含接口调用函数） → \`src/services/mods/{模块名}/index.ts\`
+   - **基础类型定义**（interface、type、enum） → \`src/services/baseClass.ts\`
+   - **全局类型声明** → \`src/services/api.d.ts\`
+   - **服务入口文件** → \`src/services/index.ts\`
+   - **测试文件** → \`tests/unit/{模块名}.test.ts\`
+
+**生成代码示例：**
+- 用户说"生成 User 模块 API" → 写入 \`src/services/mods/user/index.ts\`
+- 用户说"生成基础类型定义" → 写入 \`src/services/baseClass.ts\`
+- 用户说"生成 Order 接口" → 写入 \`src/services/mods/order/index.ts\`
+- 用户说"生成全局声明文件" → 写入 \`src/services/api.d.ts\`
+
+**重要提示：**
+- 按业务模块组织代码，每个模块一个目录
+- 所有模块的 API 代码统一放在 \`src/services/mods/{模块名}/index.ts\`
+- 共享的类型定义放在 \`src/services/baseClass.ts\`
+- 如果用户没有明确说明模块名，可以根据 API 内容推断（如 getUserInfo → user 模块）
+
+**🚨 代码生成后必须自动写入文件：**
+- 当你生成了代码（API、类型定义等），**必须使用 file_writer 工具将代码写入到文件中**
+- 不要只是在 finalAnswer 中返回代码内容，而不写入文件
+- 写入文件后，在 finalAnswer 中说明已写入的文件路径和简要说明
+- 示例流程：
+  1. 使用 swagger_parser 解析接口
+  2. 使用 type_generator 或 api_generator 生成代码
+  3. **使用 file_writer 写入到对应路径**
+  4. 返回 finalAnswer 说明完成情况
+`;
+
+  const structureSection = projectStructure 
+    ? `\n📁 当前项目实际结构：\n${projectStructure}\n\n**提示**：如果实际项目结构与默认规范不同，请优先遵循实际结构。\n`
+    : defaultPathRules;
+
+  return `你是一个强大的 AI Agent，能够通过推理和使用工具来回答问题。
+${structureSection}
 你可以使用以下工具：
 
 ${toolDescriptions}
@@ -31,26 +89,24 @@ ${toolDescriptions}
 {
   "thought": "你的思考过程",
   "action": "工具名称（如果需要使用工具）",
-  "actionInput": "工具的输入参数（如果需要使用工具）",
+  "actionInput": {"参数名": "参数值"},
   "finalAnswer": "最终答案（如果已经有答案）"
 }
 \`\`\`
+
+**重要**：actionInput 必须是对象格式，例如：
+- swagger_parser: {"filePath": "examples/sample-swagger.json"}
+- file_writer: {"filePath": "src/services/mods/user/index.ts", "content": "代码内容"}
+- type_generator: {"definitions": {...}}
 
 🚨 关键规则（必须严格遵守）：
 - 如果你需要使用工具，必须提供 "action" 和 "actionInput"，不要提供 "finalAnswer"
 - 如果你已经有足够信息回答问题，只提供 "thought" 和 "finalAnswer"，不要提供 "action"
 - 每次只能使用一个工具
 - 可用的工具名称：${toolNames.join(", ")}
-- **绝对不要用相同参数重复调用工具！** 如果你用某个参数调用了工具并获得结果，不要再用完全相同的参数调用同一个工具（这毫无意义）
+- **绝对不要用相同参数重复调用工具！** 如果你用某个参数调用了工具并获得结果，不要再用完全相同的参数调用同一个工具
 - **必须仔细阅读之前的观察结果！** 如果观察结果已经包含了所需信息，应该直接使用这些信息，或基于它进行下一步推理
-- **允许的多次调用**：如果需要基于第一次结果进行新的查询或计算（参数不同），可以再次使用工具
-- **🔢 特别重要：calculator 工具的使用规则**
-  - calculator 执行后会立即返回计算结果
-  - 看到计算结果后，仔细分析：
-    - 如果这个数值就是用户要的最终答案 → 立即输出 finalAnswer
-    - 如果需要基于这个结果做进一步判断或推理 → 继续下一步（可能需要其他工具）
-    - 如果需要用这个结果进行新的计算 → 可以再次调用 calculator（但输入必须不同）
-  - **绝对禁止**：用完全相同的参数再次调用 calculator（这毫无意义）
+- **允许的多次调用**：如果需要基于第一次结果进行新的查询（参数不同），可以再次使用工具
 - 如果工具返回了错误，考虑使用其他方法或承认无法解决
 - 每次思考时必须明确说明你从上一步的观察中获得了什么信息`;
 }
@@ -104,15 +160,6 @@ export function formatObservation(
 ): string {
   if (success) {
     const resultStr = typeof data === "string" ? data : JSON.stringify(data);
-    
-    // 对计算器工具的结果特别强调
-    if (toolName === "calculator") {
-      return `✅ 计算完成！结果是：${resultStr}\n\n⚠️ 下一步行动：
-1. 如果这个结果已经能直接回答用户问题 → 输出 finalAnswer
-2. 如果需要基于此结果继续推理或使用其他工具 → 继续下一步
-3. 绝对不要用相同参数再次调用 calculator`;
-    }
-    
     return `工具 [${toolName}] 执行成功。结果：${resultStr}`;
   } else {
     return `工具 [${toolName}] 执行失败。错误：${error}`;

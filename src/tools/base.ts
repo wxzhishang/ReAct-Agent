@@ -34,20 +34,94 @@ export abstract class Tool {
    */
   private getSchemaDescription(): string {
     try {
-      // 生成一个示例对象来展示参数结构
-      const shape = (this.schema as any)._def?.shape?.();
-      if (shape) {
-        const example: Record<string, any> = {};
-        for (const [key, value] of Object.entries(shape)) {
-          const zodType = (value as any)._def;
-          example[key] = `<${zodType.typeName || "value"}>`;
-        }
-        return JSON.stringify(example, null, 2);
-      }
-      return "{}";
-    } catch {
+      return this.formatZodSchema(this.schema, 0);
+    } catch (error) {
+      console.error(`获取 schema 描述失败 (${this.name}):`, error);
       return "{}";
     }
+  }
+
+  /**
+   * 递归格式化 Zod Schema
+   */
+  private formatZodSchema(schema: any, depth: number): string {
+    const indent = "  ".repeat(depth);
+    
+    // 尝试多种方式获取 shape
+    const shape = schema?.shape || schema?.def?.shape || schema?._def?.shape;
+    
+    if (!shape || typeof shape !== 'object') {
+      return "{}";
+    }
+
+    const fields: string[] = [];
+    
+    for (const [key, value] of Object.entries(shape)) {
+      const field = value as any;
+      
+      // 尝试多种方式获取 def
+      const def = field?._def || field?.def || field?._zod?.def;
+      const typeName = def?.typeName || def?.type;
+      const description = def?.description || "";
+      
+      // 判断是否可选
+      const isOptional = typeName === "ZodOptional" || typeName === "optional";
+      const required = isOptional ? " (可选)" : " (必需)";
+      
+      // 获取实际类型
+      let actualField = field;
+      if (isOptional && def?.innerType) {
+        actualField = def.innerType;
+      }
+      
+      const actualDef = actualField?._def || actualField?.def || actualField?._zod?.def;
+      const actualTypeName = actualDef?.typeName || actualDef?.type;
+      
+      // 格式化类型
+      let typeStr = "";
+      
+      if (actualTypeName === "ZodObject" || actualTypeName === "object") {
+        // 嵌套对象，递归展开
+        const nestedSchema = this.formatZodSchema(actualField, depth + 1);
+        typeStr = `object ${nestedSchema}`;
+      } else if (actualTypeName === "ZodEnum" || actualTypeName === "enum") {
+        // 枚举类型 - 尝试多种方式获取枚举值
+        const entries = actualDef?.entries;
+        const zodValues = actualField?._zod?.values;
+        const options = actualField?.options;
+        
+        let values: string[] = [];
+        if (entries && typeof entries === 'object') {
+          values = Object.keys(entries);
+        } else if (zodValues && zodValues instanceof Set) {
+          values = Array.from(zodValues);
+        } else if (Array.isArray(options)) {
+          values = options;
+        }
+        
+        if (values.length > 0) {
+          typeStr = `enum [${values.map((v: any) => `"${v}"`).join(", ")}]`;
+        } else {
+          typeStr = "enum";
+        }
+      } else if (actualTypeName === "ZodArray" || actualTypeName === "array") {
+        // 数组类型
+        typeStr = "array";
+      } else if (actualTypeName === "ZodString" || actualTypeName === "string") {
+        typeStr = "string";
+      } else if (actualTypeName === "ZodNumber" || actualTypeName === "number") {
+        typeStr = "number";
+      } else if (actualTypeName === "ZodBoolean" || actualTypeName === "boolean") {
+        typeStr = "boolean";
+      } else {
+        typeStr = actualTypeName?.replace("Zod", "").toLowerCase() || "unknown";
+      }
+      
+      const descStr = description ? ` - ${description}` : "";
+      fields.push(`${indent}  "${key}"${required}: ${typeStr}${descStr}`);
+    }
+    
+    return `{\n${fields.join(',\n')}\n${indent}}`;
   }
 
   /**

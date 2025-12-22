@@ -39,6 +39,7 @@ export interface AgentConfig {
   baseURL?: string;         // OpenAI API 的 base URL，用于自定义 API 端点
   apiKey?: string;          // API Key（可选，如果不在构造函数中传入）
   maxHistoryRounds?: number; // 最大历史对话轮数，默认 10（超出后自动摘要压缩）
+  projectStructure?: string; // 项目文件结构，帮助 agent 自动选择正确的文件路径
 }
 
 /**

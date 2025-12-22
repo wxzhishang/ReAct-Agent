@@ -1,0 +1,289 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "用户管理 API",
+    "version": "1.0.0",
+    "description": "一个简单的用户管理系统 API"
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/v1"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "get": {
+        "operationId": "listUsers",
+        "summary": "获取用户列表",
+        "description": "获取所有用户的列表，支持分页",
+        "tags": ["用户管理"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "页码",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "每页数量",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserListResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createUser",
+        "summary": "创建用户",
+        "description": "创建一个新用户",
+        "tags": ["用户管理"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "operationId": "getUserById",
+        "summary": "获取用户详情",
+        "description": "根据用户 ID 获取用户详细信息",
+        "tags": ["用户管理"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "用户 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateUser",
+        "summary": "更新用户",
+        "description": "更新用户信息",
+        "tags": ["用户管理"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "用户 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteUser",
+        "summary": "删除用户",
+        "description": "删除指定用户",
+        "tags": ["用户管理"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "用户 ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "删除成功"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "description": "用户对象",
+        "required": ["id", "username", "email"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "用户唯一标识"
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "email": {
+            "type": "string",
+            "description": "电子邮箱"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像 URL"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "创建时间"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "更新时间"
+          }
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "description": "创建用户请求",
+        "required": ["username", "email", "password"],
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "email": {
+            "type": "string",
+            "description": "电子邮箱"
+          },
+          "password": {
+            "type": "string",
+            "description": "密码"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        }
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "description": "更新用户请求",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "用户名"
+          },
+          "email": {
+            "type": "string",
+            "description": "电子邮箱"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "头像 URL"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        }
+      },
+      "UserListResponse": {
+        "type": "object",
+        "description": "用户列表响应",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "description": "总数"
+          },
+          "page": {
+            "type": "integer",
+            "description": "当前页"
+          },
+          "pageSize": {
+            "type": "integer",
+            "description": "每页数量"
+          },
+          "data": {
+            "type": "array",
+            "description": "用户列表",
+            "items": {
+              "$ref": "#/components/schemas/User"
+            }
+          }
+        }
+      },
+      "UserRole": {
+        "type": "string",
+        "description": "用户角色",
+        "enum": ["admin", "user", "guest"]
+      }
+    }
+  }
+}
+

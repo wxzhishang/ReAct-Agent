@@ -13,8 +13,13 @@ export type {
 export {
   Tool,
   ToolRegistry,
-  CalculatorTool,
-  SearchTool,
-  WeatherTool,
+  SwaggerParserTool,
+  BasicTypeGeneratorTool,
+  BasicAPIGeneratorTool,
+  FileReaderTool,
+  FileWriterTool,
+  FileExistsTool,
+  FileSearchTool,
+  DirectoryListTool,
 } from "./tools/index.ts";
 
